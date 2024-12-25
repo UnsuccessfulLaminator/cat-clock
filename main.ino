@@ -200,10 +200,7 @@ void update(State *state, Events events) {
             pinMode(SOUND_PIN, INPUT);
             rtc_alarm_deactivate();
 
-            Serial.println("Deactivated RTC alarm.");
-            Serial.print("RTC alarm bit set? ");
-            Serial.println(rtc_alarm_active());
-
+            state->lcd.noBacklight();
             state->mode = SHOW_TIME;
             state->elapsed = 0;
         }
