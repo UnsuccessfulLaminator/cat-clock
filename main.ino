@@ -186,7 +186,7 @@ void update(State *state, Events events) {
                 state->lcd.backlight();
 
                 pinMode(SOUND_PIN, OUTPUT);
-                delay(10);
+                delay(100);
                 pinMode(SOUND_PIN, INPUT);
             }
             else state->lcd.noBacklight();
