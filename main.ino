@@ -280,18 +280,18 @@ void update(State *state, Events events) {
                 switch(state->menu_option) {
                 case 0: t->hours = (t->hours+1)%24; break;
                 case 1: t->minutes = (t->minutes+1)%60; break;
-                case 2: t->weekday = (t->weekday+1)%7; break;
-                case 3: t->date = (t->date+1)%31; break;
-                case 4: t->month = (t->month+1)%12;
+                case 2: t->weekday = (t->weekday%7)+1; break;
+                case 3: t->date = (t->date%31)+1; break;
+                case 4: t->month = (t->month%12)+1;
                 }
             }
             else {
                 switch(state->menu_option) {
                 case 0: t->hours = (t->hours+23)%24; break;
                 case 1: t->minutes = (t->minutes+59)%60; break;
-                case 2: t->weekday = (t->weekday+6)%7; break;
-                case 3: t->date = (t->date+30)%31; break;
-                case 4: t->month = (t->month+11)%12;
+                case 2: t->weekday = ((t->weekday+5)%7)+1; break;
+                case 3: t->date = ((t->date+29)%31)+1; break;
+                case 4: t->month = ((t->month+10)%12)+1;
                 }
             }
 
@@ -348,12 +348,12 @@ void display_time_setting(
 
     if(date) {
         lcd->write(' ');
-        lcd->write(WEEKDAY_LETTERS[time->weekday]);
+        lcd->write(WEEKDAY_LETTERS[time->weekday-1]);
         lcd->write(' ');
         lcd->write('0'+time->date/10);
         lcd->write('0'+time->date%10);
         lcd->write(' ');
-        lcd->print(MONTH_NAMES[time->month]);
+        lcd->print(MONTH_NAMES[time->month-1]);
     }
 
     const uint8_t positions[5] = {1, 4, 6, 9, 12};
@@ -371,6 +371,7 @@ void rtc_init() {
     Wire.requestFrom(RTC_ADDRESS, 4);
     Wire.readBytes(alarm1_data, 4);
 
+    // Set the A1M bits so the alarm needs only HH:MM:SS to match
     alarm1_data[0] &= 0x7F;
     alarm1_data[1] &= 0x7F;
     alarm1_data[2] &= 0x7F;
@@ -453,9 +454,9 @@ Time rtc_alarm_time() {
         .seconds = 0,
         .minutes = bcd_to_bin(data[0] & 0x7F),
         .hours = bcd_to_bin(data[1] & 0x3F),
-        .weekday = 0,
-        .date = 0,
-        .month = 0,
+        .weekday = 1,
+        .date = 1,
+        .month = 1,
         .year = 0
     };
 }
@@ -495,9 +496,9 @@ void display_time(LiquidCrystal_I2C *lcd, const Time *time) {
         memcpy(&screen[1][offset], &DIGITS[digit][3], 3);
     }
 
-    memcpy(screen[0], MONTH_NAMES[time->month], 3);
+    memcpy(screen[0], MONTH_NAMES[time->month-1], 3);
 
-    screen[1][0] = WEEKDAY_LETTERS[time->weekday];
+    screen[1][0] = WEEKDAY_LETTERS[time->weekday-1];
     screen[1][1] = '0'+time->date/10;
     screen[1][2] = '0'+time->date%10;
     
