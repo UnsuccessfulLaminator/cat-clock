@@ -77,8 +77,6 @@ void setup() {
     attachInterrupt(BUTTON_INTERRUPT, BUTTON_ISR, RISING);
     attachInterrupt(ENCODER_INTERRUPT, ENCODER_ISR, RISING);
 
-    Serial.begin(57600);
-
     State state = {
         .mode = SHOW_TIME,
         .elapsed = 0,
@@ -103,8 +101,6 @@ void setup() {
     button_pressed = false;
     encoder_moved = false;
 
-    Serial.println("Entering main loop");
-
     for(int i = 0; true; i = (i+1)%100) {
         Events events = {0};
         events.timer = i == 0;
@@ -114,16 +110,6 @@ void setup() {
 
         button_pressed = false;
         encoder_moved = false;
-        
-        if(Serial.available()) {
-            char rec = Serial.read();
-
-            if(rec == 'f' || rec == 'b') {
-                events.encoder = true;
-                events.encoder_forward = rec == 'f';
-            }
-            else events.button = true;
-        }
 
         update(&state, events);
         delay(10);
@@ -133,8 +119,6 @@ void setup() {
 void update(State *state, Events events) {
     if(state->mode == SHOW_TIME) {
         if(events.timer) {
-            Serial.println("Timer tick in SHOW_TIME");
-
             if(state->elapsed == 0) {
                 Time t = rtc_time();
                 display_time(&state->lcd, &t);
@@ -149,8 +133,6 @@ void update(State *state, Events events) {
         }
 
         if(events.button) {
-            Serial.println("Button press in SHOW_TIME");
-
             state->lcd.backlight();
             state->elapsed = 0;
             state->mode = SHOW_TIME_BRIGHT;
@@ -158,8 +140,6 @@ void update(State *state, Events events) {
     }
     else if(state->mode == SHOW_TIME_BRIGHT) {
         if(events.timer) {
-            Serial.println("Timer tick in SHOW_TIME_BRIGHT");
-
             if(state->elapsed < 3) state->elapsed++;
             else {
                 state->lcd.noBacklight();
@@ -169,8 +149,6 @@ void update(State *state, Events events) {
         }
 
         if(events.button) {
-            Serial.println("Button press in SHOW_TIME_BRIGHT");
-
             state->lcd.noBacklight();
             state->mode = MENU;
             state->menu_option = 0;
@@ -180,8 +158,6 @@ void update(State *state, Events events) {
     }
     else if(state->mode == ALARM) {
         if(events.timer) {
-            Serial.println("Timer tick in ALARM");
-
             if(state->elapsed % 2) {
                 state->lcd.backlight();
 
@@ -195,8 +171,6 @@ void update(State *state, Events events) {
         }
 
         if(events.button) {
-            Serial.println("Button press in ALARM");
-
             pinMode(SOUND_PIN, INPUT);
             rtc_alarm_deactivate();
 
@@ -207,9 +181,6 @@ void update(State *state, Events events) {
     }
     else if(state->mode == MENU) {
         if(events.encoder) {
-            if(events.encoder_forward) Serial.println("Encoder forward");
-            else Serial.println("Encoder backward");
-
             if(events.encoder_forward) state->menu_option++;
             else state->menu_option += 2; // Same as decrement, mod 3
 
@@ -224,13 +195,7 @@ void update(State *state, Events events) {
         }
 
         if(events.button) {
-            Serial.print("Button press in MENU. Option = ");
-            Serial.print((int) (state->menu_option));
-            Serial.println("");
-
             if(state->menu_option == 0) {
-                Serial.println("Selected alarm option");
-
                 Time t = rtc_alarm_time();
 
                 state->mode = SET_ALARM;
@@ -240,8 +205,6 @@ void update(State *state, Events events) {
                 display_time_setting(&state->lcd, &t, 0, false);
             }
             else if(state->menu_option == 1) {
-                Serial.println("Selected time option");
-                
                 Time t = rtc_time();
 
                 state->mode = SET_TIME;
@@ -251,8 +214,6 @@ void update(State *state, Events events) {
                 display_time_setting(&state->lcd, &t, 0, true);
             }
             else if(state->menu_option == 2) {
-                Serial.println("Selected back option");
-                
                 state->mode = SHOW_TIME;
                 state->elapsed = 0;
             }
